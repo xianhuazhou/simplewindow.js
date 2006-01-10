@@ -522,6 +522,22 @@
 					</script>
 					<label class="_source">Source</label>
 				</li>
+				<li>
+				  <a href="#" onclick="return _sw18()">Add head and foot to the positioned layout</a>
+					<div style="position:absolute;left:300px;top:250px">
+						<div id="sw_18" style="display:none"><div style="background:#dc990c;">main content here</div></div>
+					</div>
+					<script type="text/javascript">
+						function _sw18() {
+							$sw.open('sw_18', {
+                headerContent: '<div style="background:yellow"><h2 style="margin:0;padding:5px;">Header</h2>',
+								footerContent: '<div>Footer<a href="#" onclick="$sw.close(\'sw_18\');return false;">[x]</a></div></div>'
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
 			</ul>
 			<h3>Public methods</h3>
 			<div class="content">
