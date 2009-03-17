@@ -11,17 +11,20 @@
                 border: 1px solid gray;
                 width: 200px;
                 height: 200px;
-                padding: 5px;
+                padding: 0;
                 background: #ddc;
             }
         </style>
     </head>
     <body>
-        <a href="#" onclick="$sw.open('o', {});return false;">open window</a>
+			  <div style="height: 700px">ddd</div>
+        <a href="#" onclick="$sw.open('o', {positionFixed: true, openEffect: 'Appear', closeEffect: 'Fade', position: 'rightTop'});return false;">open window</a>
         <div id="o" style="display:none">just for test....<br /><br />Mdasfaasf<br /><br /><br />asdfasfsfd <button onclick="$sw.close(this.parentNode)">close</button></div>
 
         <a href="#" onclick="$sw.open('myWindow', {
             size: '200x100',
+						headerContent: '<h2>Title</h2>',
+						footerContent: '<div>some footer ....</div>',
             content: {
                url: 'ajax.html'
            },
