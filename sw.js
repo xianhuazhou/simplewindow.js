@@ -13,30 +13,90 @@ var $sw = {
 	// the special attribute for the generated window
 	identifyAttribute: '_sw_',
 
+	// cached content
+	_cachedContent: [],
+
+	_options: {},
+
 	// default options
 	defaultOptions: {
+
+		// null means detect the size automatically, can't be null if want to use iframe with ajax calls
+		// possible value like 300x250 (widthxheight)
 		size: null,
+
+		// css string or css class name.
+		// possible values: "background:black;color:red", "mySimpleWindow"
 		style: 'SimpleWindow',
+
+		// position of the simple window.
+		// possible values: "middle", "leftTop", "middleTop", "rightTop",
+		//                  "leftMiddle", "rightMiddle", "leftBottom", 
+		//                  "middleBottom", "rightBottom", "200x100"(custom positions, leftxtop)
 		position: 'middle',
+
+		// default the position is "absolute", if this option is true, then the position will be "fixed"
 		positionFixed: false,
+
+		// only for ajax calls, if it's true, the position will be different with the loading layout. 
+		// otherwise, the position will be same as the loading layout, but the size is different.
+		changePosition: true,
+
+		// only for exists html node.  
+		// if it's true, then will remove the current one and create new one insert before the body tag.
 		cloneNode: false,
+
+		// can be null if you use the exists tag, or can be string.
+  	// for ajax calls, the parameter looks like:  {url: '/path/to/ajax.htm', otherOptions}, 
+	  //    the parameters are same as Ajax.Request in prototype.js.
+		//    there is a extra parameter called "delayTime", 
+		//    will show the simple window with the response content in "delayTime" ms if have, 
+		//    maybe useful for debug in some special cases.
 		content: null,
+
+		// only for ajax calls, will show the loading before the ajax calls finished.
+		// can be string or a html node.
 		loading: 'Loading...',
+
+		// z-index of the simple window
 		zIndex: 999,
 
+		// the content is a part of the simple window's content if have.
+		// can be string or a html node
 		headerContent: null,
+
+		// the content is a part of the simple windows' content if have.
+		// can be string or a html node
 		footerContent: null,
 
+		// call back function will be called before open the simple window if have.
 		beforeOpen: null,
+
+		// call back function will be called after open the simple window if have.
 		afterOpen: null,
+
+		// call back function will be called before close or remove the simple window if have.
 		beforeClose: null,
+
+		// call back function will be called after close or remove the simple window if have.
 		afterClose: null,
 
+		// use iframe for show the content of simple window.
 		iframe: false,
 
+		// open simple window with the effect if have one.  can any valid effect which defined in effects.js
+		// for example: Appear
 		openEffect: null,
+
+		// effect options for the openEffect, this parameter same as the parameter which defined in effects.js
+		// for example: {duration: 0.3, afterFinish:function(){ alert('nice') }}
+		// avaiable only if openEffect avaiable.
 		openEffectOptions: {},
+
+		// same as the openEffect, but this will be used after close the simple window.
 		closeEffect: null,
+
+		// same as the openEffectOptions, but this will be used after close the simple window with closeEffect
 		closeEffectOptions: {}
 	},
 
@@ -109,9 +169,7 @@ var $sw = {
 
 		// inline string
 		if (null == content || 'object' != typeof(content)) {
-			if (content) {
-				this._setContent(content);
-			}
+			this._setContent(content);
 			this._openWindow();
 			return;
 		}
@@ -120,14 +178,23 @@ var $sw = {
 		var self = this;
 		var options = content.options || {};
 		options.onLoading = function() {
-			self._openWindow(false).update(self.options.loading);
+			self._sw.setStyle({display: 'none'});
+			self._setContent(self._options.loading);
+			self._openWindow({
+				frame: false,
+				beforeOpen: false,
+				afterOpen: false
+			});
 		}
 		options.onComplete = function(transport) {
 			setTimeout(function(){
-				self._sw.setStyle({display: 'none'});
 				self._setContent(transport.responseText);
-				self._openWindow();
-			}, 10);
+				self._openWindow({
+					openEffect: false,
+					changePosition: options.changePosition,
+					frame: options.frame
+				});
+			}, 10 + parseInt(content.delayTime));
 		}
 
 		new Ajax.Request(content.url, options);
@@ -144,15 +211,36 @@ var $sw = {
 	 *
 	 */
 	_setContent: function(content) {
-		this._sw.update('');
-		var options = this._options;
-		if (options.headerContent) {
-			this._sw.insert(options.headerContent);
+		// get content
+		content = !content ? this._sw.innerHTML : this._getAsString(content);
+		this._cachedContent[this._sw.id] = content;
+
+		// set content with header and footer
+		this._sw.update(
+			this._getAsString(this._options.headerContent) +
+			content + 
+			this._getAsString(this._options.footerContent)
+		);
+	},
+
+	/**
+	 *
+	 * get string from a html node or just string
+	 *
+	 * @param mixed can be a html node or string or null
+	 *
+	 * @return string
+	 * @access private
+	 *
+	 */
+	_getAsString: function(node) {
+		if (null == node || Object.isString(node)) {
+			return node;
 		}
-		this._sw.insert(content);
-		if (options.footerContent) {
-			this._sw.insert(options.footerContent);
-		}
+		return new Element('div').update(
+			$(node.cloneNode(true)).setStyle({
+				display: ''
+			})).innerHTML;
 	},
 
 	/**
@@ -192,53 +280,59 @@ var $sw = {
 			parseInt(this._sw.getStyle('marginBottom'))
 		);
 
-		// get correct position
-		switch (this._options.position) {
-			case 'leftTop':
-			posLeft = 0;
-			postTop = 0;
-			break;
+		// get position
+		if (this._options.position.include('x')) {
+			  var _pos = this._options.position.split('x');
+				posLeft = parseInt(_pos[0]);
+				posTop = parseInt(_pos[1]);
+			} else {
+				switch (this._options.position) {
+					case 'leftTop':
+					posLeft = 0;
+					postTop = 0;
+					break;
 
-			case 'middleTop':
-			posLeft = (docDim.width - _swDim.width) / 2;
-			posTop = 0;
-			break;
+					case 'middleTop':
+					posLeft = (docDim.width - _swDim.width) / 2;
+					posTop = 0;
+					break;
 
-			case 'rightTop':
-			posLeft = (docDim.width - _swDim.width);
-			posTop = 0;
-			break;
+					case 'rightTop':
+					posLeft = (docDim.width - _swDim.width);
+					posTop = 0;
+					break;
 
-			case 'leftMiddle':
-			posLeft = 0;
-			posTop = (docDim.height - _swDim.height) / 2;
-			break;
+					case 'leftMiddle':
+					posLeft = 0;
+					posTop = (docDim.height - _swDim.height) / 2;
+					break;
 
-			case 'rightMiddle':
-			posLeft = (docDim.width - _swDim.width);
-			posTop = (docDim.height - _swDim.height) / 2;
-			break;
+					case 'rightMiddle':
+					posLeft = (docDim.width - _swDim.width);
+					posTop = (docDim.height - _swDim.height) / 2;
+					break;
 
-			case 'leftBottom':
-			posLeft = 0;
-			posTop = (docDim.height - _swDim.height);
-			break;
+					case 'leftBottom':
+					posLeft = 0;
+					posTop = (docDim.height - _swDim.height);
+					break;
 
-			case 'middleBottom':
-			posLeft = (docDim.width - _swDim.width) / 2;
-			posTop = (docDim.height - _swDim.height);
-			break;
+					case 'middleBottom':
+					posLeft = (docDim.width - _swDim.width) / 2;
+					posTop = (docDim.height - _swDim.height);
+					break;
 
-			case 'rightBottom':
-			posLeft = (docDim.width - _swDim.width);
-			posTop = (docDim.height - _swDim.height);
-			break;
+					case 'rightBottom':
+					posLeft = (docDim.width - _swDim.width);
+					posTop = (docDim.height - _swDim.height);
+					break;
 
-			case 'middle':
-			default:
-			posLeft = (docDim.width - _swDim.width) / 2;
-			posTop = (docDim.height - _swDim.height) / 2;
-		}
+					case 'middle':
+					default:
+					posLeft = (docDim.width - _swDim.width) / 2;
+					posTop = (docDim.height - _swDim.height) / 2;
+				}
+			}
 
 		// don't need the scrollOffsets if the position is fixed.
 		if (!this._options.positionFixed) {
@@ -360,23 +454,37 @@ var $sw = {
 	 */
 	_hide: function(id, func) {
 		var sw = $(id);
+		var isHide = 'hide' == func;
 		if (sw) {
+
+			// call back function
 			if (Object.isFunction(this._options.beforeClose)) {
 				this._options.beforeClose(sw);
 			}
 
+			// hide it
+		  var self = this;
 			if (this._options.closeEffect) {
 				this._options.closeEffectOptions.afterFinish = function(){
-					func == 'hide' ? sw.setStyle({display: 'none'}) : sw.remove();
+					self._hideIt(isHide, sw);
 				}
 				new Effect[this._options.closeEffect](sw, this._options.closeEffectOptions);
 			} else {
-				func == 'hide' ? sw.setStyle({display: 'none'}) : sw.remove();
+				this._hideIt(isHide, sw);
 			}
 
+			// call back function
 			if (Object.isFunction(this._options.afterClose)) {
 				this._options.afterClose(sw);
 			}
+		}
+	},
+	_hideIt: function(isHide, sw) {
+		if (isHide) {
+			sw.setStyle({display: 'none'}).update(this._cachedContent[sw.id]);
+		} else {
+			this._cachedContent[sw.id] = null;
+			sw.remove();
 		}
 	},
 
