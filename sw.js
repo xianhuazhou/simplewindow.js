@@ -262,16 +262,27 @@ var $sw = {
 	 * @access private
 	 *
 	 */
-	_openWindow: function() {
+  _openWindow: function(opt) {
+
+    // some options for open window
+    var opt = Object.extend({
+      beforeOpen: true,
+      afterOpen: true,
+      openEffect: true,
+      iframe: true,
+      changePosition: true
+    }, opt || {});
+
 		var sw = this._sw;
-		if (Object.isFunction(this._options.beforeOpen)) {
+		var position = this._getPosition();
+
+    // call beforeOpen
+		if (opt.beforeOpen && Object.isFunction(this._options.beforeOpen)) {
 			this._options.beforeOpen(sw);
 		}
 
-		var position = this._getPosition();
-
 		// in iframe?
-		if (arguments[0] ? arguments[0] : this._options.iframe) {
+		if (opt.iframe && this._options.iframe) {
 			var iframe = new Element('iframe', {src:'about:blank', frameborder:'0'}).setStyle({
 				width: '100%',
 				height: '100%',
@@ -291,19 +302,27 @@ var $sw = {
 
 		// show it
 		sw.setStyle({
-			left: position.left + 'px',
-			top: position.top + 'px',
 			width: position.width + 'px',
 			height: position.height + 'px'
 		});
 
-		if (this._options.openEffect) {
+    // need change the position?
+    if (opt.changePosition) {
+      sw.setStyle({
+        left: position.left + 'px',
+        top: position.top + 'px'
+      });
+    }
+
+    // show effect
+		if (opt.openEffect && this._options.openEffect) {
 			new Effect[this._options.openEffect](sw, this._options.openEffectOptions);
 		} else {
 			sw.setStyle({display: 'block'});
 		}
 
-		if (Object.isFunction(this._options.afterOpen)) {
+    // call afterOpen
+		if (opt.afterOpen && Object.isFunction(this._options.afterOpen)) {
 			this._options.afterOpen(sw);
 		}
 		return sw;
