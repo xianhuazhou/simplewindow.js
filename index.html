@@ -5,7 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <title>test Simple Window</title>
         <script type="text/javascript" src="protoaculous.js"></script>
-        <script type="text/javascript" src="sw.js"></script>
+        <script type="text/javascript" src="simplewindow.js"></script>
         <style type="text/css">
             #o {
                 border: 1px solid gray;
@@ -21,9 +21,14 @@
     <body>
 			  <div style="height: 700px">ddd</div>
 				<a href="#" onclick="$sw.open('o', {
-					positionFixed: true, 
-					openEffect: 'Appear', 
-					closeEffect: 'Fade', 
+					positionFixed: false, 
+					openEffect: function(sw, pos){
+						sw.setStyle({top: (pos.element.top - pos.offset.top - sw.getHeight()) + 'px', display:'block'});
+						new Effect.Move(sw, {y: pos.element.top, x: pos.element.left, mode: 'absolute'});
+					}, 
+					closeEffect: function(sw, pos, closeFunc) {
+   					new Effect.Move(sw, {y: pos.element.top - pos.offset.top - sw.getHeight(), x: pos.element.left, mode: 'absolute', afterFinish: closeFunc});	
+					}, 
 					position: 'middle', 
 					headerContent: $('o1'), 
 					footerContent: $('o2')
@@ -36,7 +41,7 @@
   					footerContent: '<div>some footer ....</div></div>',
             content: {
 						   url: 'ajax.html',
-							 delayTime: 4000
+							 delayTime:0 
            },
            iframe: true
         });return false;">open ajax window</a>

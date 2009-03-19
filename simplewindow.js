@@ -6,6 +6,8 @@
  *
  *  author xianhua.zhou@gmail.com
  *
+ *  version: 1.0 dev
+ *
  */
 
 var $sw = {
@@ -16,7 +18,14 @@ var $sw = {
 	// cached content
 	_cachedContent: [],
 
+	// cached position
+	_cachedPosition: [],
+
+	// current options
 	_options: {},
+
+	// check the dom whether loaded
+	_domLoaded: false,
 
 	// default options
 	defaultOptions: {
@@ -37,6 +46,9 @@ var $sw = {
 
 		// default the position is "absolute", if this option is true, then the position will be "fixed"
 		positionFixed: false,
+
+		// position offset leftxtop, add the offset px based on the "position" option, for example: 10x20
+		positionOffset: null,
 
 		// only for ajax calls, if it's true, the position will be different with the loading layout. 
 		// otherwise, the position will be same as the loading layout, but the size is different.
@@ -113,6 +125,10 @@ var $sw = {
 	 */
 	open: function(id, options) {
 
+		if (!this._domLoaded) {
+			return;
+		}
+
 		// initialize some options
 		var options = Object.extend(
 			Object.extend({}, this.defaultOptions), 
@@ -148,12 +164,11 @@ var $sw = {
 		// basic style
 		this._sw = _sw.setStyle({
 			position:options.positionFixed ? 'fixed' : 'absolute', 
-			zInde:options.zIndex, 
-			display:'none'
-			}).writeAttribute(this.identifyAttribute, 'y');
+			zInde:options.zIndex 
+		}).writeAttribute(this.identifyAttribute, 'y');
 
-			// render and show
-			this._render();
+		// render and show
+		this._render();
 	},
 
 	/**
@@ -169,7 +184,7 @@ var $sw = {
 
 		// inline string
 		if (null == content || 'object' != typeof(content)) {
-			this._setContent(content);
+			this._setContent(content, this._options.iframe, false);
 			this._openWindow();
 			return;
 		}
@@ -179,7 +194,7 @@ var $sw = {
 		var options = content.options || {};
 		options.onLoading = function() {
 			self._sw.setStyle({display: 'none'});
-			self._setContent(self._options.loading);
+			self._setContent(self._options.loading, false, false);
 			self._openWindow({
 				frame: false,
 				beforeOpen: false,
@@ -188,11 +203,10 @@ var $sw = {
 		}
 		options.onComplete = function(transport) {
 			setTimeout(function(){
-				self._setContent(transport.responseText);
+				self._setContent(transport.responseText, self._options.iframe, true);
 				self._openWindow({
 					openEffect: false,
-					changePosition: options.changePosition,
-					frame: options.frame
+					changePosition: options.changePosition
 				});
 			}, 10 + parseInt(content.delayTime));
 		}
@@ -205,15 +219,39 @@ var $sw = {
 	 * set content to the window
 	 *
 	 * @param string content
+	 * @param boolean iframe   use iframe or not
+	 * @param boolean canReset  can set content again or not
 	 *
 	 * @return void
 	 * @access private
 	 *
 	 */
-	_setContent: function(content) {
+	_setContent: function(content, hasIframe, canReset) {
+
+		// opened?
+		if (this._sw.getStyle('display') != 'none' && !canReset) {
+			return;
+		}
+
 		// get content
 		content = !content ? this._sw.innerHTML : this._getAsString(content);
 		this._cachedContent[this._sw.id] = content;
+
+		// iframe?
+		if (hasIframe) {
+			var iframeId = '_' + new Date().getTime();
+			iframe = new Element('iframe', {id: iframeId, src:'about:blank', frameborder:'0'}).setStyle({
+				width: '100%',
+				height: '100%',
+				margin: 0,
+				padding: 0,
+				marginWidth: '0',
+				marginHeight: '0',
+				scrolling: 'auto'
+			});
+			var originContent = content;
+			content = this._getAsString(iframe);	
+		}
 
 		// set content with header and footer
 		this._sw.update(
@@ -221,6 +259,15 @@ var $sw = {
 			content + 
 			this._getAsString(this._options.footerContent)
 		);
+
+		// iframe?
+		if (hasIframe) {
+			iframe = $(iframeId);
+			var doc = iframe.contentWindow ? iframe.contentWindow.document : iframe.contentDocument;
+			doc.open();
+			doc.write(originContent);
+			doc.close();
+		}
 	},
 
 	/**
@@ -247,15 +294,16 @@ var $sw = {
 	 *
 	 * get the position of window for render
 	 *
-	 * @return hash  {left:N, top:N, width:N, height:N}
+	 * @return object some positions and size of the window and screen 
 	 * @access private
 	 *
 	 */
-	_getPosition: function() {
-		if (null === this._options.size) {
+	_getPositionAndSize: function() {
+		var _options = this._options;
+		if (null === _options.size) {
 			var _swDim = this._sw.getDimensions();
 		} else {
-			var size = this._options.size.split('x');
+			var size = _options.size.split('x');
 			var _swDim = {width: parseInt(size[0]), height: parseInt(size[1])}
 		}
 
@@ -281,12 +329,12 @@ var $sw = {
 		);
 
 		// get position
-		if (this._options.position.include('x')) {
-			  var _pos = this._options.position.split('x');
+		if (_options.position.include('x')) {
+			  var _pos = _options.position.split('x');
 				posLeft = parseInt(_pos[0]);
 				posTop = parseInt(_pos[1]);
 			} else {
-				switch (this._options.position) {
+				switch (_options.position) {
 					case 'leftTop':
 					posLeft = 0;
 					postTop = 0;
@@ -335,16 +383,43 @@ var $sw = {
 			}
 
 		// don't need the scrollOffsets if the position is fixed.
-		if (!this._options.positionFixed) {
+		if (!_options.positionFixed) {
 			posLeft += docScrollOffsets.left;
 			posTop += docScrollOffsets.top;
 		}
 
+		// position offset
+		if (null != _options.positionOffset && _options.positionOffset.include('x')) {
+			var _offset = _options.positionOffset.split('x');
+			posLeft += parseInt(_offset[0]);
+			posTop += parseInt(_offset[1]);
+		}
+
 		return {
-			left:posLeft, 
-			top:posTop, 
-			width:_swDim.width, 
-			height:_swDim.height
+
+			// element's info
+			element: {
+				left:posLeft, 
+				top:posTop, 
+				width:_swDim.width, 
+				height:_swDim.height
+			},
+
+			// offset between element and viewport
+			offset: {
+				left: posLeft - docScrollOffsets.left,
+				top: posTop - docScrollOffsets.top,
+				right: docScrollOffsets.left + docDim.width - posLeft,
+				bottom: docScrollOffsets.top + docDim.height - posTop
+			},
+
+			// document viewport and scroll offsets
+			viewport: {
+				width: docDim.width,
+				height: docDim.height,
+				scrollLeft: docScrollOffsets.left,
+				scrollTop: docScrollOffsets.top
+			}
 		};
 	},
 
@@ -363,61 +438,47 @@ var $sw = {
       beforeOpen: true,
       afterOpen: true,
       openEffect: true,
-      iframe: true,
       changePosition: true
     }, opt || {});
 
 		var sw = this._sw;
-		var position = this._getPosition();
+		var _options = this._options;
+		var position = this._getPositionAndSize();
+		this._cachedPosition[sw.id] = position;
 
     // call beforeOpen
-		if (opt.beforeOpen && Object.isFunction(this._options.beforeOpen)) {
-			this._options.beforeOpen(sw);
-		}
-
-		// in iframe?
-		if (opt.iframe && this._options.iframe) {
-			var iframe = new Element('iframe', {src:'about:blank', frameborder:'0'}).setStyle({
-				width: '100%',
-				height: '100%',
-				margin: 0,
-				padding: 0,
-				marginWidth: '0',
-				marginHeight: '0',
-				scrolling: 'auto'
-			});
-			var content = sw.innerHTML;
-			sw.update(iframe);
-			var doc = iframe.contentWindow ? iframe.contentWindow.document : iframe.contentDocument;
-			doc.open();
-			doc.write(content);
-			doc.close();
+		if (opt.beforeOpen && Object.isFunction(_options.beforeOpen)) {
+			_options.beforeOpen(sw);
 		}
 
 		// show it
 		sw.setStyle({
-			width: position.width + 'px',
-			height: position.height + 'px'
+			width: position.element.width + 'px',
+			height: position.element.height + 'px'
 		});
 
     // need change the position?
     if (opt.changePosition) {
       sw.setStyle({
-        left: position.left + 'px',
-        top: position.top + 'px'
+        left: position.element.left + 'px',
+        top: position.element.top + 'px'
       });
     }
 
     // show effect
-		if (opt.openEffect && this._options.openEffect) {
-			new Effect[this._options.openEffect](sw, this._options.openEffectOptions);
+		if (Object.isFunction(_options.openEffect)) {
+			_options.openEffect(sw, position);
 		} else {
-			sw.setStyle({display: 'block'});
+			if (opt.openEffect && _options.openEffect) {
+				new Effect[_options.openEffect](sw, _options.openEffectOptions);
+			} else {
+				sw.setStyle({display: 'block'});
+			}
 		}
 
     // call afterOpen
-		if (opt.afterOpen && Object.isFunction(this._options.afterOpen)) {
-			this._options.afterOpen(sw);
+		if (opt.afterOpen && Object.isFunction(_options.afterOpen)) {
+			_options.afterOpen(sw);
 		}
 		return sw;
 	},
@@ -454,28 +515,37 @@ var $sw = {
 	 */
 	_hide: function(id, func) {
 		var sw = $(id);
+		var _options = this._options;
 		var isHide = 'hide' == func;
 		if (sw) {
 
 			// call back function
-			if (Object.isFunction(this._options.beforeClose)) {
-				this._options.beforeClose(sw);
+			if (Object.isFunction(_options.beforeClose)) {
+				_options.beforeClose(sw);
 			}
 
 			// hide it
 		  var self = this;
-			if (this._options.closeEffect) {
-				this._options.closeEffectOptions.afterFinish = function(){
-					self._hideIt(isHide, sw);
-				}
-				new Effect[this._options.closeEffect](sw, this._options.closeEffectOptions);
+			if (Object.isFunction(_options.closeEffect)) {
+				_options.closeEffect(
+					sw, 
+					this._cachedPosition[sw.id], 
+					function(){self._hideIt(isHide, sw)}
+				);
 			} else {
-				this._hideIt(isHide, sw);
+				if (_options.closeEffect) {
+					_options.closeEffectOptions.afterFinish = function(){
+						self._hideIt(isHide, sw);
+					}
+					new Effect[_options.closeEffect](sw, _options.closeEffectOptions);
+				} else {
+					this._hideIt(isHide, sw);
+				}
 			}
 
 			// call back function
-			if (Object.isFunction(this._options.afterClose)) {
-				this._options.afterClose(sw);
+			if (Object.isFunction(_options.afterClose)) {
+				_options.afterClose(sw);
 			}
 		}
 	},
@@ -484,6 +554,7 @@ var $sw = {
 			sw.setStyle({display: 'none'}).update(this._cachedContent[sw.id]);
 		} else {
 			this._cachedContent[sw.id] = null;
+			this._cachedPosition[sw.id] = null;
 			sw.remove();
 		}
 	},
@@ -505,3 +576,8 @@ var $sw = {
 		});
 	}
 }
+
+// go go go
+document.observe('dom:loaded', function(){
+	$sw._domLoaded = true;
+});
