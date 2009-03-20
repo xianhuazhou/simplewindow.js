@@ -109,7 +109,13 @@ var $sw = {
 		closeEffect: null,
 
 		// same as the openEffectOptions, but this will be used after close the simple window with closeEffect
-		closeEffectOptions: {}
+		closeEffectOptions: {},
+
+		// effects for loading
+		openLoadingEffect: null,
+		openLoadingEffectOptions: {},
+		closeLoadingEffect: null,
+		closeLoadingEffectOptions: {},
 	},
 
 	/**
@@ -189,25 +195,47 @@ var $sw = {
 			return;
 		}
 
-		// ajax calls
 		var self = this;
 		var options = content.options || {};
+
+		// onloading callback
 		options.onLoading = function() {
 			self._sw.setStyle({display: 'none'});
 			self._setContent(self._options.loading, false, false);
 			self._openWindow({
 				frame: false,
-				beforeOpen: false,
-				afterOpen: false
+				isLoading: true
 			});
 		}
+
+		// complete callback
 		options.onComplete = function(transport) {
 			setTimeout(function(){
-				self._setContent(transport.responseText, self._options.iframe, true);
-				self._openWindow({
-					openEffect: false,
-					changePosition: options.changePosition
-				});
+				var _op = function(){
+					self._setContent(transport.responseText, self._options.iframe, true);
+					self._openWindow({
+						changePosition: options.changePosition
+					});
+				}
+
+				// closeLoadingEffect callback
+				if (self._options.closeLoadingEffect && self._cachedPosition[self._sw.id + '__loading']) {
+					if (Object.isFunction(self._options.closeLoadingEffect)) {
+						self._options.closeLoadingEffect(
+							self._sw, 
+							self._cachedPosition[self._sw.id + '__loading'], 
+							_op
+						);
+					} else {
+						self._options.closeLoadingEffectOptions.afterFinish = op;
+						new Effect[self._options.closeLoadingEffect](
+							self._sw, 
+							self._options.closeLoadingEffectOptions
+						);
+					}
+				} else {
+					_op();
+				}
 			}, 10 + parseInt(content.delayTime));
 		}
 
@@ -281,7 +309,10 @@ var $sw = {
 	 *
 	 */
 	_getAsString: function(node) {
-		if (null == node || Object.isString(node)) {
+		if (null == node) {
+			return '';
+		} 
+		if (Object.isString(node)) {
 			return node;
 		}
 		return new Element('div').update(
@@ -435,19 +466,21 @@ var $sw = {
 
     // some options for open window
     var opt = Object.extend({
-      beforeOpen: true,
-      afterOpen: true,
-      openEffect: true,
-      changePosition: true
+      changePosition: true,
+			isLoading: false
     }, opt || {});
 
 		var sw = this._sw;
 		var _options = this._options;
 		var position = this._getPositionAndSize();
-		this._cachedPosition[sw.id] = position;
+		if (opt.isLoading) {
+			this._cachedPosition[sw.id + '__loading'] = position;
+		} else {
+			this._cachedPosition[sw.id] = position;
+		}
 
     // call beforeOpen
-		if (opt.beforeOpen && Object.isFunction(_options.beforeOpen)) {
+		if (!opt.isLoading && Object.isFunction(_options.beforeOpen)) {
 			_options.beforeOpen(sw);
 		}
 
@@ -465,19 +498,33 @@ var $sw = {
       });
     }
 
-    // show effect
-		if (Object.isFunction(_options.openEffect)) {
-			_options.openEffect(sw, position);
-		} else {
-			if (opt.openEffect && _options.openEffect) {
-				new Effect[_options.openEffect](sw, _options.openEffectOptions);
+		// show effect for loading
+		if (opt.isLoading) {
+			if ( _options.openLoadingEffect) {
+				if (Object.isFunction(_options.openLoadingEffect)) {
+					_options.openLoadingEffect(sw, position);
+				} else {
+					new Effect[_options.openLoadingEffect](sw, _options.openLoadingEffectOptions);
+				}
 			} else {
 				sw.setStyle({display: 'block'});
+			}
+
+		// show effect for final open
+		} else {
+			if (Object.isFunction(_options.openEffect)) {
+				_options.openEffect(sw, position);
+			} else {
+				if (_options.openEffect) {
+					new Effect[_options.openEffect](sw, _options.openEffectOptions);
+				} else {
+					sw.setStyle({display: 'block'});
+				}
 			}
 		}
 
     // call afterOpen
-		if (opt.afterOpen && Object.isFunction(_options.afterOpen)) {
+		if (!opt.isLoading && Object.isFunction(_options.afterOpen)) {
 			_options.afterOpen(sw);
 		}
 		return sw;
@@ -549,12 +596,26 @@ var $sw = {
 			}
 		}
 	},
+
+	/**
+	 *
+	 * hide or removee a window
+	 *
+	 * @param boolean isHide
+	 * @param object sw  window object
+	 *
+	 * @return void
+	 * @access private
+	 */
 	_hideIt: function(isHide, sw) {
 		if (isHide) {
 			sw.setStyle({display: 'none'}).update(this._cachedContent[sw.id]);
 		} else {
 			this._cachedContent[sw.id] = null;
 			this._cachedPosition[sw.id] = null;
+			if (this._cachedPosition[sw.id + '__loading']) {
+				this._cachedPosition[sw.id + '__loading'] = null;
+			}
 			sw.remove();
 		}
 	},

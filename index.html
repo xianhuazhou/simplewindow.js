@@ -36,14 +36,16 @@
         <div id="o" style="display:none">just for test....<br /><br />Mdasfaasf<br /><br /><br />asdfasfsfd <button onclick="$sw.close('o')">close</button></div>
 
         <a href="#" onclick="$sw.open('myWindow', {
-            size: '200x100',
-						headerContent: '<div id=\'wrap\'><h2>Title</h2>',
-  					footerContent: '<div>some footer ....</div></div>',
             content: {
 						   url: 'ajax.html',
-							 delayTime:0 
+							 delayTime: 1000 
            },
-           iframe: true
+					 openLoadingEffect: 'Appear',
+					 closeLoadingEffect: 'Fade',
+					 openEffect: function(sw, pos, lpos) {
+  					 new Effect.Appear(sw);
+				   },
+					 closeEffect: 'BlindUp'
         });return false;">open ajax window</a>
 			<div id="o1" style="display:none"><h3>Here</h3></div>
 			<div id="o2" style="display:none"><h3>There</h3></div>
