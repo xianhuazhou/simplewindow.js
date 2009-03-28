@@ -249,14 +249,17 @@ var $sw = {
 				top: '0px',
 				margin: '0',
 				padding: '0',
-				width: (self._docDim.width + self._docScrollOffsets.left) + 'px',
-				height: (self._docDim.height + self._docScrollOffsets.top) + 'px',
 				display: 'none'
 			});
 			$(document.body).insert(this._overlay);
 		}
 
-		this._overlay.setStyle({zIndex: _options.zIndex - 1});
+		// special properties for the overlay, could be changed sometimes.
+		this._overlay.setStyle({
+			zIndex: _options.zIndex - 1,
+			width: (self._docDim.width + self._docScrollOffsets.left) + 'px',
+			height: (self._docDim.height + self._docScrollOffsets.top) + 'px'
+		});
 
 		// click event
 		if (Object.isFunction(overlay.afterClick)) {
@@ -669,7 +672,7 @@ var $sw = {
 		if (_options.autoResize || opt.isLoading) {
 			sw.setStyle({
 				width: position.element.width + 'px',
-				height: position.element.height + 'px',
+				height: position.element.height + 'px'
 			});
 		}
 
