@@ -1,0 +1,81 @@
+* {
+	line-height: 150%;
+	font-size: 12px;
+}
+a {
+	color: blue;
+	text-decoration: none;
+}
+a:hover {
+	color: red;
+}
+#o {
+	border: 1px solid gray;
+	padding: 0;
+	background: #ddc;
+}
+#wrap {
+	padding: 5px;
+	border: 5px solid gray;
+}
+.SimpleWindow {
+	border: 1px solid blue;
+	padding: 2px;
+	background: white;
+}
+#swSource {
+	width: 600px;
+	height: 400px;
+	overflow: auto;
+	background: white;
+}
+#swSource textarea {
+	border: 1px solid #909909;
+	width: 590px;
+	height: 370px;
+}
+ul li {
+	margin: 0;
+	padding: 5px;
+	list-style: decimal;
+	clear: both;
+}
+ul li label {
+	margin-left: 3px;
+	cursor: pointer;
+	padding: 2px;
+	background: #deedcd;
+	border-bottom: 1px solid #9c9c90;
+	border-right: 1px solid #9c9a99;
+}
+
+div.content {
+	margin-left: 10px;
+}
+
+h3 {
+	font-weight: bold;
+	color: black;
+	font-size: 14px;
+	background: #b5b9f1;
+	padding: 3px;
+	margin: 5px;
+}
+
+#simplewindow {
+	margin-top: 30px;
+	text-align: center;
+	color: gray;
+	padding: 5px;
+	background: #c8c9db;
+}
+
+#simplewindowHeader {
+	text-align: center;
+	font-weight: bold;
+	color: #7f86e5;
+	margin: 0 5px 0 5px;
+	border-left: 1px solid #7f86e5;
+	border-right: 1px solid #7f86e5;
+	font-size: 18px;
+}

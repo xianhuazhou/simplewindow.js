@@ -9,23 +9,26 @@
  *  version: 1.0 dev
  *
  */
-
 var $sw = {
-
 	// the special attribute for the generated window
 	identifyAttribute: '_sw_',
 
-	// cached content
-	_cachedContent: [],
+	// cache
+	_cache: {
+		headerContent: [],
+		footerContent: [],
+		content: [],
+		position: []
+	},
 
-	// cached position
-	_cachedPosition: [],
-
-	// current options
-	_options: {},
+	// options for all of simple windows
+	_options: [],
 
 	// check the dom whether loaded
 	_domLoaded: false,
+
+	// overlay
+	_overlay: null,
 
 	// default options
 	defaultOptions: {
@@ -65,6 +68,22 @@ var $sw = {
 		//    will show the simple window with the response content in "delayTime" ms if have, 
 		//    maybe useful for debug in some special cases.
 		content: null,
+
+		// overlay, can be {
+		// background: 'black', 
+		// opacity: 0.5, 
+		// openEffect: null, 
+		// openEffectOptions: {},
+		// closeEffect: null,
+		// closeEffectOptions: {},
+		// afterClick: null
+		// }
+		overlay: null,
+
+		// resize the window automatically, 
+		// can set it to false if you want to resize by the custom openEffect callback function
+		// only avaiable if the openEffect callback function is defined by youself
+		autoResize: true,
 
 		// only for ajax calls, will show the loading before the ajax calls finished.
 		// can be string or a html node.
@@ -115,7 +134,7 @@ var $sw = {
 		openLoadingEffect: null,
 		openLoadingEffectOptions: {},
 		closeLoadingEffect: null,
-		closeLoadingEffectOptions: {},
+		closeLoadingEffectOptions: {}
 	},
 
 	/**
@@ -135,12 +154,16 @@ var $sw = {
 			return;
 		}
 
+		// dom dimensions and scrollOffsets
+		this._docDim = document.viewport.getDimensions();
+		this._docScrollOffsets = document.viewport.getScrollOffsets();
+
 		// initialize some options
 		var options = Object.extend(
 			Object.extend({}, this.defaultOptions), 
 			options || {}
 		);
-		this._options = options;
+		this._options[id] = options;
 
 		// initialize the window
 		if (!id) {
@@ -169,12 +192,99 @@ var $sw = {
 
 		// basic style
 		this._sw = _sw.setStyle({
+			width:'',
+			height:'',
 			position:options.positionFixed ? 'fixed' : 'absolute', 
+			display:'none',
 			zInde:options.zIndex 
 		}).writeAttribute(this.identifyAttribute, 'y');
 
 		// render and show
 		this._render();
+	},
+
+	/**
+	 *
+	 * set content
+	 *
+	 * @param mixed sw       can be html node or id
+	 * @param mixed content  can be html node or string
+	 *
+	 * @return void
+	 * @access public
+	 *
+	 */
+	setContent: function(sw, content) {
+	  sw = $(sw);
+		if (!sw) {
+			return;
+		}
+
+		content = this._getAsString(content);
+		this._cache.content[this._sw.id] = content;
+		
+		// set content
+		sw.update(this._cache.headerContent[this._sw.id] + 
+			content + this._cache.footerContent[this._sw.id]);
+	},
+
+	/**
+	 *
+	 * render overlay if need
+	 *
+	 * @return void
+	 * @access private
+	 *
+	 */
+	_renderOverlay: function() {
+		var self = this, _options = this._options[this._sw.id];
+		var overlay = _options.overlay;
+
+		// initialize overlay
+		if (!this._overlay) {
+			this._overlay = new Element('div').setStyle({
+				background: 'black',
+				position: 'absolute',
+				left: '0px',
+				top: '0px',
+				margin: '0',
+				padding: '0',
+				width: (self._docDim.width + self._docScrollOffsets.left) + 'px',
+				height: (self._docDim.height + self._docScrollOffsets.top) + 'px',
+				display: 'none'
+			});
+			$(document.body).insert(this._overlay);
+		}
+
+		this._overlay.setStyle({zIndex: _options.zIndex - 1});
+
+		// click event
+		if (Object.isFunction(overlay.afterClick)) {
+			this._overlay.observe('click', function(e){
+				overlay.afterClick(this._overlay, e);
+			});
+		} else {
+			this._overlay.stopObserving('click');
+		}
+
+		// styling
+		this._overlay.setStyle({
+			opacity: overlay.opacity,
+			background: overlay.background
+		});
+
+		// show it
+		if (!overlay.openEffect) {
+			return this._overlay.setStyle({display: 'block'});
+		}
+
+		// open effect
+		if (Object.isString(overlay.openEffect)) {
+			new Effect[overlay.openEffect](this._overlay, {} || overlay.openEffectOptions);
+		}
+		if (Object.isFunction(overlay.openEffect)) {
+			overlay.openEffect(this._overlay);
+		}
 	},
 
 	/**
@@ -186,11 +296,27 @@ var $sw = {
 	 *
 	 */
 	_render: function() {
-		var content = this._options.content;
+		var _options = this._options[this._sw.id];
+
+		// check overlay
+		if (_options.overlay) {
+			_options.overlay = Object.extend({
+				background: 'black',
+				opacity: 0.5,
+				openEffect: null,
+				openEffectOptions: {},
+				closeEffect: null,
+				closeEffectOptions: {},
+				afterClick: null
+			}, _options.overlay);
+			this._renderOverlay();
+		}
+
+		var content = _options.content;
 
 		// inline string
 		if (null == content || 'object' != typeof(content)) {
-			this._setContent(content, this._options.iframe, false);
+			this._setContent(content, _options.iframe, false);
 			this._openWindow();
 			return;
 		}
@@ -201,7 +327,7 @@ var $sw = {
 		// onloading callback
 		options.onLoading = function() {
 			self._sw.setStyle({display: 'none'});
-			self._setContent(self._options.loading, false, false);
+			self._setContent(_options.loading, false, false);
 			self._openWindow({
 				frame: false,
 				isLoading: true
@@ -212,25 +338,28 @@ var $sw = {
 		options.onComplete = function(transport) {
 			setTimeout(function(){
 				var _op = function(){
-					self._setContent(transport.responseText, self._options.iframe, true);
+					self._setContent(transport.responseText, _options.iframe, true);
 					self._openWindow({
-						changePosition: options.changePosition
+						changePosition: _options.changePosition
 					});
 				}
 
+				// reset the size
+				self._sw.setStyle({width:'',height:''});
+
 				// closeLoadingEffect callback
-				if (self._options.closeLoadingEffect && self._cachedPosition[self._sw.id + '__loading']) {
-					if (Object.isFunction(self._options.closeLoadingEffect)) {
-						self._options.closeLoadingEffect(
+				if (_options.closeLoadingEffect && self._cache.position[self._sw.id + '__loading']) {
+					if (Object.isFunction(_options.closeLoadingEffect)) {
+						_options.closeLoadingEffect(
 							self._sw, 
-							self._cachedPosition[self._sw.id + '__loading'], 
+							self._cache.position[self._sw.id + '__loading'], 
 							_op
 						);
 					} else {
-						self._options.closeLoadingEffectOptions.afterFinish = op;
-						new Effect[self._options.closeLoadingEffect](
+						_options.closeLoadingEffectOptions.afterFinish = _op;
+						new Effect[_options.closeLoadingEffect](
 							self._sw, 
-							self._options.closeLoadingEffectOptions
+							_options.closeLoadingEffectOptions
 						);
 					}
 				} else {
@@ -263,7 +392,7 @@ var $sw = {
 
 		// get content
 		content = !content ? this._sw.innerHTML : this._getAsString(content);
-		this._cachedContent[this._sw.id] = content;
+		this._cache.content[this._sw.id] = content;
 
 		// iframe?
 		if (hasIframe) {
@@ -281,12 +410,12 @@ var $sw = {
 			content = this._getAsString(iframe);	
 		}
 
+		this._cache.headerContent[this._sw.id] = this._getAsString(this._options[this._sw.id].headerContent);
+		this._cache.footerContent[this._sw.id] = this._getAsString(this._options[this._sw.id].footerContent);
+
 		// set content with header and footer
-		this._sw.update(
-			this._getAsString(this._options.headerContent) +
-			content + 
-			this._getAsString(this._options.footerContent)
-		);
+		this._sw.update(this._cache.headerContent[this._sw.id] + 
+			content + this._cache.footerContent[this._sw.id]);
 
 		// iframe?
 		if (hasIframe) {
@@ -309,7 +438,7 @@ var $sw = {
 	 *
 	 */
 	_getAsString: function(node) {
-		if (null == node) {
+		if (null == node || !node) {
 			return '';
 		} 
 		if (Object.isString(node)) {
@@ -323,6 +452,48 @@ var $sw = {
 
 	/**
 	 *
+	 * get the size of spaces for padding and border
+	 *
+	 * @param object obj
+	 *
+	 * @return object
+	 * @access private
+	 *
+	 */
+	_getBlankSpaces: function(obj) {
+		var _obj = {};
+		$w('borderLeftWidth borderRightWidth borderTopWidth borderBottomWidth paddingLeft paddingRight paddingTop paddingBottom').each(function(p){
+			_obj[p] = obj.getStyle(p);
+		});
+		return _obj;
+	},
+
+	/**
+	 *
+	 * set blank spaces
+	 *
+	 * @param object spaces 
+	 * @param string val  if use this parameter, then all of the values of blank spaces will use this one.
+	 *
+	 * @return object
+	 * @access private
+	 *
+	 */
+	_setBlankSpaces: function(spaces, val) {
+		var obj = {}, key = value = null;
+		for (var key in spaces) {
+			value = spaces[key];
+			if (val) {
+				obj[key] = val;
+			} else {
+				obj[key] = /^[0-9]+$/.test(value) ? value + 'px' : value;
+			}
+		}
+		return obj;
+	},
+
+	/**
+	 *
 	 * get the position of window for render
 	 *
 	 * @return object some positions and size of the window and screen 
@@ -330,40 +501,47 @@ var $sw = {
 	 *
 	 */
 	_getPositionAndSize: function() {
-		var _options = this._options;
+		var _options = this._options[this._sw.id];
 		if (null === _options.size) {
-			var _swDim = this._sw.getDimensions();
+			// get full dimensions
+			var _swFullDim = this._sw.getDimensions();
+			var _borderWidth = parseInt(this._sw.getStyle('borderLeftWidth')) 
+			     + parseInt(this._sw.getStyle('borderRightWidth')),
+			   _borderHeight = parseInt(this._sw.getStyle('borderTopWidth')) 
+				   + parseInt(this._sw.getStyle('borderBottomWidth'));
+			if (!isNaN(_borderWidth)) {
+				_swFullDim.width += _borderWidth;
+			}
+			if (!isNaN(_borderHeight)) {
+				_swFullDim.height += _borderHeight;
+			}
+
+			// get dimensions without the space of padding and border.
+			var _swBP = this._getBlankSpaces(this._sw);
+			var _swDim = this._sw.setStyle(this._setBlankSpaces(_swBP, '0')).getDimensions();
+
+			// restore css for the space of border and padding.
+			this._sw.setStyle(this._setBlankSpaces(_swBP));
+
 		} else {
-			var size = _options.size.split('x');
-			var _swDim = {width: parseInt(size[0]), height: parseInt(size[1])}
+			var size = _options.size.split('x'),
+			_swFullDim = _swDim = {width: parseInt(size[0]), height: parseInt(size[1])};
 		}
 
-		var docDim = document.viewport.getDimensions(),
-		docScrollOffsets = document.viewport.getScrollOffsets(),
+		var docDim = this._docDim, docScrollOffsets = this._docScrollOffsets,
 		posLeft = posTop = 0;
-
-		// clean the space of border, padding and margin. 
-		// see http://www.prototypejs.org/api/element/getStyle, not works for all browsers!!
-		docDim.width -= (parseInt(this._sw.getStyle('borderLeftWidth')) +
-			parseInt(this._sw.getStyle('borderRightWidth')) +
-			parseInt(this._sw.getStyle('paddingLeft')) +
-			parseInt(this._sw.getStyle('paddingRight')) +
-			parseInt(this._sw.getStyle('marginLeft')) +
-			parseInt(this._sw.getStyle('marginRight'))
-		);
-		docDim.height -= (parseInt(this._sw.getStyle('borderTopWidth')) +
-			parseInt(this._sw.getStyle('borderBottomWidth')) +
-			parseInt(this._sw.getStyle('paddingTop')) +
-			parseInt(this._sw.getStyle('paddingBottom')) +
-			parseInt(this._sw.getStyle('marginTop')) +
-			parseInt(this._sw.getStyle('marginBottom'))
-		);
 
 		// get position
 		if (_options.position.include('x')) {
 			  var _pos = _options.position.split('x');
 				posLeft = parseInt(_pos[0]);
 				posTop = parseInt(_pos[1]);
+				if (isNaN(posLeft)) {
+					posLeft = 0;
+				}
+				if (isNaN(posTop)) {
+					posTop = 0;
+				}
 			} else {
 				switch (_options.position) {
 					case 'leftTop':
@@ -372,46 +550,47 @@ var $sw = {
 					break;
 
 					case 'middleTop':
-					posLeft = (docDim.width - _swDim.width) / 2;
+					posLeft = (docDim.width - _swFullDim.width) / 2;
 					posTop = 0;
 					break;
 
 					case 'rightTop':
-					posLeft = (docDim.width - _swDim.width);
+					posLeft = (docDim.width - _swFullDim.width);
 					posTop = 0;
 					break;
 
 					case 'leftMiddle':
 					posLeft = 0;
-					posTop = (docDim.height - _swDim.height) / 2;
+					posTop = (docDim.height - _swFullDim.height) / 2;
 					break;
 
 					case 'rightMiddle':
-					posLeft = (docDim.width - _swDim.width);
-					posTop = (docDim.height - _swDim.height) / 2;
+					posLeft = (docDim.width - _swFullDim.width);
+					posTop = (docDim.height - _swFullDim.height) / 2;
 					break;
 
 					case 'leftBottom':
 					posLeft = 0;
-					posTop = (docDim.height - _swDim.height);
+					posTop = (docDim.height - _swFullDim.height);
 					break;
 
 					case 'middleBottom':
-					posLeft = (docDim.width - _swDim.width) / 2;
-					posTop = (docDim.height - _swDim.height);
+					posLeft = (docDim.width - _swFullDim.width) / 2;
+					posTop = (docDim.height - _swFullDim.height);
 					break;
 
 					case 'rightBottom':
-					posLeft = (docDim.width - _swDim.width);
-					posTop = (docDim.height - _swDim.height);
+					posLeft = (docDim.width - _swFullDim.width);
+					posTop = (docDim.height - _swFullDim.height);
 					break;
 
 					case 'middle':
 					default:
-					posLeft = (docDim.width - _swDim.width) / 2;
-					posTop = (docDim.height - _swDim.height) / 2;
+					posLeft = (docDim.width - _swFullDim.width) / 2;
+					posTop = (docDim.height - _swFullDim.height) / 2;
 				}
 			}
+
 
 		// don't need the scrollOffsets if the position is fixed.
 		if (!_options.positionFixed) {
@@ -471,12 +650,12 @@ var $sw = {
     }, opt || {});
 
 		var sw = this._sw;
-		var _options = this._options;
+		var _options = this._options[this._sw.id];
 		var position = this._getPositionAndSize();
 		if (opt.isLoading) {
-			this._cachedPosition[sw.id + '__loading'] = position;
+			this._cache.position[sw.id + '__loading'] = position;
 		} else {
-			this._cachedPosition[sw.id] = position;
+			this._cache.position[sw.id] = position;
 		}
 
     // call beforeOpen
@@ -484,11 +663,15 @@ var $sw = {
 			_options.beforeOpen(sw);
 		}
 
-		// show it
-		sw.setStyle({
-			width: position.element.width + 'px',
-			height: position.element.height + 'px'
-		});
+		sw.setStyle({zIndex: _options.zIndex});
+
+		// auto size
+		if (_options.autoResize || opt.isLoading) {
+			sw.setStyle({
+				width: position.element.width + 'px',
+				height: position.element.height + 'px',
+			});
+		}
 
     // need change the position?
     if (opt.changePosition) {
@@ -513,7 +696,7 @@ var $sw = {
 		// show effect for final open
 		} else {
 			if (Object.isFunction(_options.openEffect)) {
-				_options.openEffect(sw, position);
+				_options.openEffect(sw, position, this._cache.position[sw.id + '__loading']);
 			} else {
 				if (_options.openEffect) {
 					new Effect[_options.openEffect](sw, _options.openEffectOptions);
@@ -533,6 +716,7 @@ var $sw = {
 	// close a window, just hide
 	close: function(id) {
 		this._hide(id, 'hide');
+		this._hideOverlay();
 	},
 
 	// close all windows, just hide them
@@ -543,6 +727,7 @@ var $sw = {
 	// remove a window
 	remove: function(id) {
 		this._hide(id, 'remove');
+		this._hideOverlay();
 	},
 
 	// remove all windows
@@ -562,7 +747,7 @@ var $sw = {
 	 */
 	_hide: function(id, func) {
 		var sw = $(id);
-		var _options = this._options;
+		var _options = this._options[sw.id];
 		var isHide = 'hide' == func;
 		if (sw) {
 
@@ -576,7 +761,7 @@ var $sw = {
 			if (Object.isFunction(_options.closeEffect)) {
 				_options.closeEffect(
 					sw, 
-					this._cachedPosition[sw.id], 
+					this._cache.position[sw.id], 
 					function(){self._hideIt(isHide, sw)}
 				);
 			} else {
@@ -609,13 +794,21 @@ var $sw = {
 	 */
 	_hideIt: function(isHide, sw) {
 		if (isHide) {
-			sw.setStyle({display: 'none'}).update(this._cachedContent[sw.id]);
-		} else {
-			this._cachedContent[sw.id] = null;
-			this._cachedPosition[sw.id] = null;
-			if (this._cachedPosition[sw.id + '__loading']) {
-				this._cachedPosition[sw.id + '__loading'] = null;
+			sw.setStyle({display: 'none'}).update(this._cache.content[sw.id]);
+			if (this._cache.position[sw.id + '__loading']) {
+				var pos = this._cache.position[sw.id + '__loading'];
+				sw.setStyle({
+					width: pos.element.width + 'px',
+					height: pos.element.height + 'px'
+				});
 			}
+		} else {
+			delete this._cache.content[sw.id];
+			delete this._cache.position[sw.id];
+			if (this._cache.position[sw.id + '__loading']) {
+				delete this._cache.position[sw.id + '__loading'];
+			}
+			delete this._options[sw.id];
 			sw.remove();
 		}
 	},
@@ -635,6 +828,38 @@ var $sw = {
 		$$('div[' + this.identifyAttribute + '=y]').each(function(it){
 			func == 'hide' ? self.close(it) : self.remove(it);
 		});
+		this._hideOverlay();
+	},
+
+	/**
+	 *
+	 * hide overlay if need
+	 *
+	 * @return void
+	 * @access private
+	 *
+	 */
+	_hideOverlay: function() {
+		// hide overlay
+		if (!this._overlay) {
+			return;
+		}
+
+		var overlay = this._options[this._sw.id].overlay;
+		if (!overlay) {
+			return;
+		}
+
+		if (!overlay.closeEffect) {
+			return this._overlay.setStyle({display: 'none'});
+		}
+
+		// close effect
+		if (Object.isString(overlay.closeEffect)) {
+			new Effect[overlay.closeEffect](this._overlay, {} || overlay.closeEffectOptions);
+		} else if (Object.isFunction(overlay.closeEffect)) {
+			overlay.closeEffect(this._overlay);
+		}
 	}
 }
 

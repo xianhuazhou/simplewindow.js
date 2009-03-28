@@ -3,51 +3,242 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>test Simple Window</title>
+        <title>simplewindow.js</title>
         <script type="text/javascript" src="protoaculous.js"></script>
         <script type="text/javascript" src="simplewindow.js"></script>
         <style type="text/css">
-            #o {
-                border: 1px solid gray;
-                padding: 0;
-                background: #ddc;
-            }
-						#wrap {
-							padding: 5px;
-							border: 5px solid gray;
-						}
+					@import url(demo.css);
         </style>
     </head>
     <body>
-			  <div style="height: 700px">ddd</div>
-				<a href="#" onclick="$sw.open('o', {
-					positionFixed: false, 
-					openEffect: function(sw, pos){
-						sw.setStyle({top: (pos.element.top - pos.offset.top - sw.getHeight()) + 'px', display:'block'});
-						new Effect.Move(sw, {y: pos.element.top, x: pos.element.left, mode: 'absolute'});
-					}, 
-					closeEffect: function(sw, pos, closeFunc) {
-   					new Effect.Move(sw, {y: pos.element.top - pos.offset.top - sw.getHeight(), x: pos.element.left, mode: 'absolute', afterFinish: closeFunc});	
-					}, 
-					position: 'middle', 
-					headerContent: $('o1'), 
-					footerContent: $('o2')
-					});return false;">open window</a>
-        <div id="o" style="display:none">just for test....<br /><br />Mdasfaasf<br /><br /><br />asdfasfsfd <button onclick="$sw.close('o')">close</button></div>
+			<div id="simplewindowHeader">simplewindow.js -&gt; $sw.open(......); $sw.close(.); $sw.closeAll();</div>
+			<h3>Introduction</h3>
+			<div class="content">simplewindow.js is a javascript library for show a inline window, dialog or box, it's light weight, flexible and easy to use. basically, it's only one js file, so means you need to styling everything by youself depends on your project.</div>
+			<h3>Setup</h3>
+			<div class="content">
+			   Requirments: prototype.js and effects.js from script.aculo.us.<br />
+				 for example:
+				 <div style="margin-left: 20px;">
+				 &lt;script type="text/javascript" src="prototype.js"&gt;&lt;/script&gt;<br />
+				 &lt;script type="text/javascript" src="effects.js"&gt;&lt;/script&gt;<br />
+				 &lt;script type="text/javascript" src="simplewindow.js"&gt;&lt;/script&gt;
+				 </div>
+			</div>
+			<h3>Examples</h3>
+			<ul>
+				<li>
+					<a href="#" onclick="return _sw1();">Click And Click</a>
+					<script type="text/javascript">
+						function _sw1() {
+							var id = 'sw_1'; 
+							($(id) && $(id).visible()) ? 
+									$sw.close(id) : 
+									$sw.open(id, {content:'Hello, Welcome!'}); 
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="$sw.open('sw_2');return false;">Show a pre-defined div</a>
+					<div id="sw_2" style="display:none">
+						this is a div with static content!<br />
+						<a href="#" onclick="$sw.close('sw_2');return false;">Close</a>
+					</div>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="$sw.open('sw_3', {position: 'leftTop'});return false;">On leftTop</a>
+					<div id="sw_3" style="display:none;color:red">
+						Nice position, isn't it?<br />
+						<a href="#" onclick="$sw.close('sw_3');return false;">Close</a>
+					</div>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  On the 
+					<select size="1" onchange="if($F(this))$sw.open('sw_4', {position: $F(this)})">
+						<option value="">Please select one</option>
+						<option value="leftTop">leftTop</option>
+						<option value="middleTop">middleTop</option>
+						<option value="rightTop">rightTop</option>
+						<option value="leftMiddle">leftMiddle</option>
+						<option value="Middle">Middle</option>
+						<option value="leftBottom">leftBottom</option>
+						<option value="middleBottom">middleBottom</option>
+						<option value="rightBottom">rightBottom</option>
+					</select>
+					position!
+					<div id="sw_4" style="display:none;color:red">
+						Nice position, isn't it?<br />
+						<a href="#" onclick="$sw.close('sw_4');return false;">Close</a>
+					</div>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  With custom position:
+				  Left:<input type="text" size="5" id="sw_5_left" value="500" />, 
+				  Top:<input type="text" size="5" id="sw_5_top" value="100" />
+				  <a href="#" onclick="$sw.open('sw_5', {position: $F('sw_5_left') + 'x' + $F('sw_5_top')});return false;">Go!</a>
+					<div id="sw_5" style="display:none;color:red">
+						Custom position example!<br />
+						<a href="#" onclick="$sw.close('sw_5');return false;">Close</a>
+					</div>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  Closed in 5 seconds since open:
+					<a href="#" onclick="return _sw6()">Go!</a>
+					<div id="sw_6" style="display:none;color:red">
+						Will be closed in <span id="_sw_6_times">5</span> seconds automatically<br />
+					</div>
+					<script type="text/javascript">
+						function _sw6() {
 
-        <a href="#" onclick="$sw.open('myWindow', {
-            content: {
-						   url: 'ajax.html',
-							 delayTime: 1000 
-           },
-					 openLoadingEffect: 'Appear',
-					 closeLoadingEffect: 'Fade',
-					 openEffect: function(sw, pos, lpos) {
-  					 new Effect.Appear(sw);
-				   },
-					 closeEffect: 'BlindUp'
-        });return false;">open ajax window</a>
-			<div id="o1" style="display:none"><h3>Here</h3></div>
-			<div id="o2" style="display:none"><h3>There</h3></div>
+							// afterOpen callback function
+							var afterOpen = function(sw){
+
+							  // update the number of seconds	
+								var si = setInterval(function(){
+									var tm = $('_sw_6_times');
+									tm.update(parseInt(tm.innerHTML) - 1);
+								}, 1000);
+
+								// closed in 5 seconds
+								setTimeout(function(){
+									clearInterval(si);
+									$sw.close(sw);
+								}, 5000)
+							};
+
+							// open the window with callback function "afterOpen" and overlay
+							$sw.open('sw_6', {
+                afterOpen: afterOpen, 
+								overlay: {
+                  background: 'gray'
+								}
+							});
+
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw7();">Ajax Call</a>
+					<script type="text/javascript">
+						function _sw7() {
+							$sw.open('sw_7', {
+								content: {url: 'examples/ajax_call.htm', delayTime: 2000},
+								openLoadingEffect: 'Appear',
+								autoResize: false,
+								openEffect: function(sw, swPos, loadPos) {
+								  var data = sw.innerHTML;
+									sw.update('');
+									sw.setStyle({
+										width: loadPos.element.width + 'px', 
+										height: loadPos.element.height + 'px'
+									});
+									new Effect.Morph(sw, {
+										style: {
+											width: swPos.element.width + 'px', 
+											height: swPos.element.height + 'px'
+										},
+										afterFinish: function(){
+											sw.update(data);
+										}
+									});
+								},
+								changePosition: false
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw8();">Ajax Call with simple effects</a>
+					<script type="text/javascript">
+						function _sw8() {
+							$sw.open('sw_8', {
+                content: {url: 'examples/ajax_call_with_simple_effects.htm', delayTime: 2000},
+								openLoadingEffect: 'Appear',
+								closeLoadingEffect: 'BlindUp',
+								openEffect: 'BlindDown',
+								closeEffect: 'Fade',
+								changePosition: false
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw9();">Ajax Call without effects</a>
+					<script type="text/javascript">
+						function _sw9() {
+							$sw.open('sw_9', {
+                content: {url: 'examples/ajax_call_without_effects.htm', delayTime: 2000}
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw10();">Ajax Call with iframe</a>
+					<script type="text/javascript">
+						function _sw10() {
+							$sw.open('sw_10', {
+                content: {url: 'examples/ajax_call_with_iframe.htm', delayTime: 2000},
+								size: '250x250',
+							  iframe: true
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw11();">External url in iframe</a>
+					<script type="text/javascript">
+						function _sw11() {
+							$sw.open('sw_11', {
+                content: '<a href="#" onclick="$sw.close(\'sw_11\'); return false">Close</a>' +
+								         '<iframe src="http://www.prototypejs.org" width="290" height="240"></iframe>',
+								size: '300x270',
+								openEffect: 'BlindDown',
+								closeEffect: 'BlindUp'
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+			</ul>
+			<h3>License</h3>
+			<div class="content">feel free to use, you can do whatever you want:-)</div>
+			<div id="simplewindow">by <a href="http://my.cnzxh.net">my.cnzxh.net</a></div>
+			<script type="text/javascript">
+				document.observe('dom:loaded', function(){
+  				$$('a').each(function(it){it.observe('click', function(){this.blur()})});
+					var demoSource = null;
+					$$('label._source').each(function(label){
+						label.observe('mouseover', function(){
+							this.setStyle({background: '#cddaba'});
+						}).observe('mouseout', function(){
+							this.setStyle({background: '#deedcd'});
+						});
+						demoSource = $(label.parentNode).innerHTML.split('<label ').first().escapeHTML().gsub(/\t/, ' ').gsub(/\n\s{4}/, "\n ");	
+						label.writeAttribute('demoSource', demoSource).observe('click', function(){
+							this.blur();
+							var content = '<div style="text-align:right; background:#d7f0c9;"><a href="#" onclick="$sw.close(\'swSource\');this.blur();return false;">X</a></div>' +
+							'<textarea>' + this.readAttribute('demoSource') + '</textarea>'
+							;
+							$sw.open('swSource', {content: content, zIndex: 1000, openEffect: 'Appear', closeEffect: 'BlindUp', overlay: {background: 'blue', closeEffect: 'Fade', afterClick:function(){$sw.closeAll()} }});
+						});
+					});
+			  });
+			</script>
     </body>
 </html>
