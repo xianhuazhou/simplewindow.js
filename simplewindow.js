@@ -327,6 +327,10 @@ var $sw = {
 		var self = this;
 		var options = content.options || {};
 
+		if (Object.isUndefined(options['method'])) {
+			options.method = 'get';
+		}
+
 		// onloading callback
 		options.onLoading = function() {
 			self._sw.setStyle({display: 'none'});
