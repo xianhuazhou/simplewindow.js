@@ -227,6 +227,10 @@
   					</div>
 					</div>
 					<script type="text/javascript">
+						// Please don't worry about these codes :-) just for show how to custom the simple window
+					  // You can do any controllers as you want
+
+					  // maximal
 						function sw12Maximal() {
 							$(document.body).setStyle({overflow: 'hidden'});
 							var w = $('sw_12'), vp = document.viewport;
@@ -246,6 +250,8 @@
 								w.setStyle(sty);
 							$('sw_12_min', 'sw_12_max').invoke('toggle');
 						}
+
+            // minimal
             function sw12Minimal() {
 							var w = $('sw_12');
 							var wInfo = $sw.sw12;
@@ -261,16 +267,32 @@
 							$(document.body).setStyle({overflow: ''});
 							$('sw_12_min', 'sw_12_max').invoke('toggle');
 						}
+
+            // handle the open and close events for the simple window
 						function _sw12() {
 							$sw.open('sw_12', {
                 openEffect: 'Appear',
-								closeEffect: 'Fade',
-								afterClose: function(){
-								  $(document.body).setStyle({overflow: ''});
-								}
-							});
-							return false;
-						}
+								closeEffect: function(sw) {
+
+									// we need to reset the status for next open, 
+									// just copy from the minimal function, it's not so good, right:-)
+								  new Effect.Fade(sw, {afterFinish: function(){
+										$(document.body).setStyle({overflow: ''});
+										var wInfo = $sw.sw12;
+										var sty = {
+											left: wInfo.offset.left + 'px',
+											top: wInfo.offset.top + 'px',
+											width: wInfo.dim.width + 'px',
+											height: wInfo.dim.height + 'px'
+										}
+										sw.setStyle(sty);
+										$('sw_12_min', 'sw_12_max').invoke('toggle');
+									}
+								});
+							}
+						});
+					  return false;
+					}
 					</script>
 					<label class="_source">Source</label>
 				</li>
