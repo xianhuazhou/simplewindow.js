@@ -213,6 +213,67 @@
 					</script>
 					<label class="_source">Source</label>
 				</li>
+				<li>
+				  <a href="#" onclick="return _sw12();">Minimal and Maximal</a>
+					&nbsp;&nbsp;<input type="checkbox" id="sw_12_animation" value="1" />with animantion?
+					<div id="sw_12" style="width:300px;height:250px;display:none;padding:0;border:0;background:#819ccd">
+						<div style="padding:0;margin:auto;background:white;width:98%;height:98%">
+							<div style="text-align:right; padding:3px; background:#cddee0;">
+								<span id="sw_12_max"><a href="#" onclick="sw12Maximal();return false">+</a></span>
+								<span id="sw_12_min" style="display:none"><a href="#" onclick="sw12Minimal();return false">-</a></span>
+								<a href="#" onclick="$sw.close('sw_12'); return false">X</a>
+							</div>
+							<div style="text-align:center;">Have a nice day!</div>
+  					</div>
+					</div>
+					<script type="text/javascript">
+						function sw12Maximal() {
+							$(document.body).setStyle({overflow: 'hidden'});
+							var w = $('sw_12'), vp = document.viewport;
+							var vpOffsets = vp.getScrollOffsets();
+							$sw.sw12 = {
+                dim: w.getDimensions(),
+								offset: w.cumulativeOffset()
+							}
+							var sty = {
+								left: vpOffsets.left + 'px',
+								top: vpOffsets.top + 'px',
+								width: vp.getWidth() + 'px',
+								height: vp.getHeight() + 'px'
+							}
+							$F('sw_12_animation') ? 
+								new Effect.Morph(w, {style: sty}):
+								w.setStyle(sty);
+							$('sw_12_min', 'sw_12_max').invoke('toggle');
+						}
+            function sw12Minimal() {
+							var w = $('sw_12');
+							var wInfo = $sw.sw12;
+							var sty = {
+								left: wInfo.offset.left + 'px',
+								top: wInfo.offset.top + 'px',
+								width: wInfo.dim.width + 'px',
+								height: wInfo.dim.height + 'px'
+							}
+							$F('sw_12_animation') ? 
+								new Effect.Morph(w, {style: sty}):
+								w.setStyle(sty);
+							$(document.body).setStyle({overflow: ''});
+							$('sw_12_min', 'sw_12_max').invoke('toggle');
+						}
+						function _sw12() {
+							$sw.open('sw_12', {
+                openEffect: 'Appear',
+								closeEffect: 'Fade',
+								afterClose: function(){
+								  $(document.body).setStyle({overflow: ''});
+								}
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
 			</ul>
 			<h3>License</h3>
 			<div class="content">feel free to use, you can do whatever you want:-)</div>
