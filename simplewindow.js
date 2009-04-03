@@ -192,8 +192,6 @@ var $sw = {
 
 		// basic style
 		this._sw = _sw.setStyle({
-			width:'',
-			height:'',
 			position:options.positionFixed ? 'fixed' : 'absolute', 
 			display:'none',
 			zInde:options.zIndex 
