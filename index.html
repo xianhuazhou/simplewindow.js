@@ -111,7 +111,7 @@
 				  Closed in 5 seconds since open:
 					<a href="#" onclick="return _sw6()">Go!</a>
 					<div id="sw_6" style="display:none;color:red">
-						Will be closed in <span id="_sw_6_times">5</span> seconds automatically<br />
+						Will be closed in <span id="_sw_6_times">5 seconds</span> automatically<br />
 					</div>
 					<script type="text/javascript">
 						function _sw6() {
@@ -121,8 +121,8 @@
 
 							  // update the number of seconds	
 								var si = setInterval(function(){
-									var tm = $('_sw_6_times');
-									tm.update(parseInt(tm.innerHTML) - 1);
+									var tm = $('_sw_6_times'), times = parseInt(tm.innerHTML) - 1;
+									tm.update(times > 1 ? times + ' seconds' : times + ' second');
 								}, 1000);
 
 								// closed in 5 seconds
@@ -324,7 +324,7 @@
 					<div id="sw_13" style="display:none;margin:0;padding:0;background:#dbffb7">
 						<img src="examples/images/view.jpg"/>
 						<div style="display:none">
-							<div style="padding:5px;text-align:center">
+							<div style="padding:5px;text-align:center;width:290px">
 								Nice view in Beijing, China.
 								<div style="text-align:right">
 									<a href="#" onclick="this.blur();$sw.close('sw_13');return false">X</a>
@@ -435,7 +435,7 @@
 								position: {
 									left: offset.left,
 									top: offset.top + handle.getHeight()
-								},
+								}
 							});
 						}
             function _sw15_close() {
