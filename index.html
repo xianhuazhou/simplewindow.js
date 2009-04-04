@@ -14,13 +14,35 @@
 			<div class="content">simplewindow.js is a javascript library for show a inline window, dialog or box, it's light weight, flexible and easy to use. basically, it's only one js file, so means you need to styling everything by youself depends on your project.</div>
 			<h3>Setup</h3>
 			<div class="content">
-			   Requirments: prototype.js and effects.js from script.aculo.us.<br />
+				 Requirments: prototype.js and effects.js from script.aculo.us.<br /><br />
 				 for example:
-				 <div style="margin-left: 20px;">
-				 &lt;script type="text/javascript" src="prototype.js"&gt;&lt;/script&gt;<br />
-				 &lt;script type="text/javascript" src="effects.js"&gt;&lt;/script&gt;<br />
-				 &lt;script type="text/javascript" src="simplewindow.js"&gt;&lt;/script&gt;
-				 </div>
+					 <div class="code">
+						 &lt;script type="text/javascript" src="prototype.js"&gt;&lt;/script&gt;<br />
+						 &lt;script type="text/javascript" src="effects.js"&gt;&lt;/script&gt;<br />
+						 &lt;script type="text/javascript" src="simplewindow.js"&gt;&lt;/script&gt;<br /><br />
+			     </div>
+				   you can use the libraries from google also, e.g.<br />
+					 <div class="code">
+						 &lt;html&gt;<br />
+						 &lt;head&gt;<br />
+						 &lt;script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/prototype/1.6.0.3/prototype.js"&gt;&lt;/script&gt;<br />
+						 &lt;script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/scriptaculous/1.8.2/effects.js"&gt;&lt;/script&gt;<br />
+						 &lt;script type="text/javascript" src="/path/to/simplewindow.js"&gt;&lt;/script&gt;<br />
+						 &lt;/head&gt;<br />
+						 &lt;body&gt;<br />
+						 &nbsp;&nbsp;&nbsp;&nbsp;&lt;div id="test" style="display:none"&gt;some contents&lt;/div&gt;<br />
+						 &nbsp;&nbsp;&nbsp;&nbsp;&lt;a href="#" onclick="$sw.open('test'); return false"&gt;show a div&lt;/a&gt;<br />
+						 &lt;/body&gt;<br />
+						 &lt;/html&gt;<br /><br />
+			     </div>
+
+				 another better way is just load all of compressed js libraries for prototype and scriptaculous one time if you need other features such as dragdrop or autocompleter in your projects, so only need one http request. e.g.<br />
+
+					 <div class="code">
+						 &lt;script type="text/javascript" src="protoaculous.1.8.2.min.js"&gt;&lt;/script&gt;<br />
+						 &lt;script type="text/javascript" src="simplewindow.js"&gt;&lt;/script&gt;<br /><br />
+			     </div>
+				 you can get the file protoaculous.1.8.2.min.js from <a href="http://groups.google.com/group/prototype-core/files">http://groups.google.com/group/prototype-core/files</a>
 			</div>
 			<h3>Examples</h3>
 			<ul>
@@ -296,7 +318,73 @@
 					</script>
 					<label class="_source">Source</label>
 				</li>
+				<li>
+				  <a href="#" onclick="return _sw13();">Show a image</a>
+					<div id="sw_13" style="display:none;margin:0;padding:0;background:#dbffb7">
+						<img src="examples/images/view.jpg"/>
+						<div style="display:none">
+							<div style="padding:5px;text-align:center">
+								Nice view in Beijing, China.
+								<div style="text-align:right">
+									<a href="#" onclick="this.blur();$sw.close('sw_13');return false">X</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<script type="text/javascript">
+						function _sw13() {
+							$sw.open('sw_13', {
+                openEffect: function(sw) {
+								  sw.setStyle({width:'', height:''}); // clean the fixed size
+									new Effect.Appear(sw, {afterFinish: function(){
+									  new Effect.SlideDown(sw.down('div'));
+									}});
+								},
+								closeEffect: function(sw) {
+								  new Effect.SlideUp(sw.down('div'), {afterFinish: function(){
+											new Effect.Fade(sw);
+										}
+									});
+								},
+								overlay: {
+								  background: '#7e8bc1',
+									openEffect: 'BlindDown',
+									closeEffect: function(ol) {
+									  setTimeout(function(){new Effect.BlindUp(ol)}, 2000);
+									},
+									opacity: 0.9
+								}
+							});
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="#" onclick="return _sw14();">Show a image with AJAX calls</a>
+					<script type="text/javascript">
+						function _sw14() {
+							$sw.open('sw_14_ajax', {
+								loading: '<div style="background:#ddeedd;text-align:center;color:red;width:300px;height:270px">Loading...</div>',
+								size: '300x275',
+								openLoadingEffect: 'BlindDown', 
+								closeLoadingEffect: 'BlindUp', 
+                content: {
+                  url: 'examples/ajax_with_a_image.html',
+									delayTime: 2000
+								},
+                openEffect: 'BlindDown' 
+							});
+							return false
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
 			</ul>
+			<h3>Download</h3>
+			<div class="content">
+			  <a href="http://github.com/xianhuazhou/simplewindow.js/tree/master">http://github.com/xianhuazhou/simplewindow.js/tree/master</a>
+		  </div>
 			<h3>License</h3>
 			<div class="content">feel free to use, you can do whatever you want:-)</div>
 			<div id="simplewindow">by <a href="http://my.cnzxh.net">my.cnzxh.net</a></div>
