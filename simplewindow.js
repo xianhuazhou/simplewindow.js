@@ -281,7 +281,7 @@ var $sw = {
 
 		// open effect
 		if (Object.isString(overlay.openEffect)) {
-			new Effect[overlay.openEffect](this._overlay, {} || overlay.openEffectOptions);
+			new Effect[overlay.openEffect](this._overlay, overlay.openEffectOptions || {});
 		}
 		if (Object.isFunction(overlay.openEffect)) {
 			overlay.openEffect(this._overlay);
@@ -861,7 +861,7 @@ var $sw = {
 
 		// close effect
 		if (Object.isString(overlay.closeEffect)) {
-			new Effect[overlay.closeEffect](this._overlay, {} || overlay.closeEffectOptions);
+			new Effect[overlay.closeEffect](this._overlay, overlay.closeEffectOptions || {});
 		} else if (Object.isFunction(overlay.closeEffect)) {
 			overlay.closeEffect(this._overlay);
 		}
