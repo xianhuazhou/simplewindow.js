@@ -81,3 +81,27 @@ h3 {
 	color: #2856e0; 
 	margin-left: 20px
 }
+span.code {
+	margin: 1px;
+}
+
+ul#methods li {
+	list-style: square; 
+}
+
+#Options table {
+	width: 98%;
+	background: #a5a6d3;
+}
+#Options table tbody tr td.odd {
+	padding: 3px;
+}
+#Options table tbody tr.even {
+	background: #dadbf5;
+}
+#Options table tbody tr.odd {
+	background: #eee;
+}
+#Options table thead tr th.examples {
+	width: 50%;
+}
