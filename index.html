@@ -98,7 +98,7 @@
 				<li>
 				  With custom position:
 				  Left:<input type="text" size="5" id="sw_5_left" value="500" />, 
-				  Top:<input type="text" size="5" id="sw_5_top" value="100" />
+				  Top:<input type="text" size="5" id="sw_5_top" value="800" />
 				  <a href="#" onclick="$sw.open('sw_5', {position: $F('sw_5_left') + 'x' + $F('sw_5_top')});return false;">Go!</a>
 					<div id="sw_5" style="display:none;color:red">
 						Custom position example!<br />
@@ -149,7 +149,7 @@
 					<script type="text/javascript">
 						function _sw7() {
 							$sw.open('sw_7', {
-								content: {url: 'examples/ajax_call.htm', delayTime: 2000},
+								content: {url: 'examples/ajax_call.htm', delayTime: 1000},
 								openLoadingEffect: 'Appear',
 								autoResize: false,
 								openEffect: function(sw, swPos, loadPos) {
@@ -181,7 +181,7 @@
 					<script type="text/javascript">
 						function _sw8() {
 							$sw.open('sw_8', {
-                content: {url: 'examples/ajax_call_with_simple_effects.htm', delayTime: 2000},
+                content: {url: 'examples/ajax_call_with_simple_effects.htm', delayTime: 1000},
 								openLoadingEffect: 'Appear',
 								closeLoadingEffect: 'BlindUp',
 								openEffect: 'BlindDown',
@@ -198,7 +198,7 @@
 					<script type="text/javascript">
 						function _sw9() {
 							$sw.open('sw_9', {
-                content: {url: 'examples/ajax_call_without_effects.htm', delayTime: 2000}
+                content: {url: 'examples/ajax_call_without_effects.htm', delayTime: 1000}
 							});
 							return false;
 						}
@@ -210,7 +210,7 @@
 					<script type="text/javascript">
 						function _sw10() {
 							$sw.open('sw_10', {
-                content: {url: 'examples/ajax_call_with_iframe.htm', delayTime: 2000},
+                content: {url: 'examples/ajax_call_with_iframe.htm', delayTime: 1000},
 								size: '250x250',
 							  iframe: true
 							});
@@ -376,6 +376,102 @@
                 openEffect: 'BlindDown' 
 							});
 							return false
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="javascript:void(0)" onmouseover="return _sw15($(this));" onmouseout="$sw._sw15=0;_sw15_close();">Simple menu(mouseover and mouseout)</a>
+					<style type="text/css">
+						#sw_15 ul {
+							margin: 0;
+							padding: 0;
+						}
+						#sw_15 ul li {
+							background: #deeddc;
+							padding: 0;
+							margin: 0;
+							list-style: none;
+							cursor: pointer;
+							display: 'block';
+						}
+						#sw_15 ul li a {
+							background: #d4ddf4;
+							display: block;
+							width: 100%;
+							padding: 3px;
+							padding-right: 0;
+						}
+						#sw_15 ul li a:hover {
+							background: #c7ccd7;
+							padding-bottom: 2px;
+							border-bottom: 1px solid #b5bac4;
+						}
+					</style>
+					<div id="sw_15" style="display:none;border:0;width:250px;margin:0;padding:0" onmouseover="$sw._sw15=1" onmouseout="$sw._sw15=0;_sw15_close()">
+						<ul>
+							<li><a href="javascript:void(0)">Prototype</a></li>
+							<li><a href="javascript:void(0)">YUI</a></li>
+							<li><a href="javascript:void(0)">Dojo</a></li>
+							<li><a href="javascript:void(0)">Jquery</a></li>
+						</ul>
+					</div>
+					<script type="text/javascript">
+						function _sw15(handle) {
+							$sw._sw15 = 1;
+							var offset = handle.cumulativeOffset();
+							$sw.open('sw_15', {
+								position: {
+									left: offset.left,
+									top: offset.top + handle.getHeight()
+								},
+							});
+						}
+            function _sw15_close() {
+							setTimeout(function(){
+									if (!$sw._sw15) $sw.close('sw_15');
+							}, 10);
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
+				<li>
+				  <a href="javascript:void(0)" onmouseover="return _sw16($(this));" onmouseout="$sw.close('sw_16')">Show tips</a>
+					<div id="sw_16" style="display:none;color:red;background:yellow">Show tips with effects<br />The effect can be changed...</div>
+					<script type="text/javascript">
+						function _sw16(handle) {
+
+							// don't need to execute it if the tips is still showing...
+							if ($sw.sw_16_showing) return;
+							$sw.sw_16_showing = 1;
+							var offset = handle.cumulativeOffset();
+
+							$sw.open('sw_16', {
+								position: {
+								  left: offset.left,
+									top: (offset.top - $('sw_16').getHeight() - 4)
+								},
+
+								// open
+                openEffect: function(sw) {
+								  new Effect.Grow(sw, {duration:0.5, afterFinish: function(){
+										  $sw.sw_16_showing = 0;
+										}
+									});
+								},
+
+								// close
+								closeEffect: function(sw) {
+								  if ($sw.sw_16_hidding) return;
+								  new Effect.Fade(sw, {duration:0.5, afterFinish: function(){
+										  $sw.sw_16_hidding = 0;
+										},
+										afterStart: function(){
+										  $sw.sw_16_hidding = 1;
+										}
+									});
+								}
+							});
 						}
 					</script>
 					<label class="_source">Source</label>
