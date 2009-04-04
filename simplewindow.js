@@ -44,7 +44,8 @@ var $sw = {
 		// position of the simple window.
 		// possible values: "middle", "leftTop", "middleTop", "rightTop",
 		//                  "leftMiddle", "rightMiddle", "leftBottom", 
-		//                  "middleBottom", "rightBottom", "200x100"(custom positions, leftxtop)
+		//                  "middleBottom", "rightBottom", "200x100"(custom positions, leftxtop),
+		//                  {left: 200, top: 100}
 		position: 'middle',
 
 		// default the position is "absolute", if this option is true, then the position will be "fixed"
@@ -534,71 +535,74 @@ var $sw = {
 		}
 
 		var docDim = this._docDim, docScrollOffsets = this._docScrollOffsets,
-		posLeft = posTop = 0;
-
+		posLeft = posTop = 0, isCustomPosition = true;
 		// get position
-		if (_options.position.include('x')) {
-			  var _pos = _options.position.split('x');
-				posLeft = parseInt(_pos[0]);
-				posTop = parseInt(_pos[1]);
-				if (isNaN(posLeft)) {
-					posLeft = 0;
-				}
-				if (isNaN(posTop)) {
-					posTop = 0;
-				}
-			} else {
-				switch (_options.position) {
-					case 'leftTop':
-					posLeft = 0;
-					postTop = 0;
-					break;
-
-					case 'middleTop':
-					posLeft = (docDim.width - _swFullDim.width) / 2;
-					posTop = 0;
-					break;
-
-					case 'rightTop':
-					posLeft = (docDim.width - _swFullDim.width);
-					posTop = 0;
-					break;
-
-					case 'leftMiddle':
-					posLeft = 0;
-					posTop = (docDim.height - _swFullDim.height) / 2;
-					break;
-
-					case 'rightMiddle':
-					posLeft = (docDim.width - _swFullDim.width);
-					posTop = (docDim.height - _swFullDim.height) / 2;
-					break;
-
-					case 'leftBottom':
-					posLeft = 0;
-					posTop = (docDim.height - _swFullDim.height);
-					break;
-
-					case 'middleBottom':
-					posLeft = (docDim.width - _swFullDim.width) / 2;
-					posTop = (docDim.height - _swFullDim.height);
-					break;
-
-					case 'rightBottom':
-					posLeft = (docDim.width - _swFullDim.width);
-					posTop = (docDim.height - _swFullDim.height);
-					break;
-
-					case 'middle':
-					default:
-					posLeft = (docDim.width - _swFullDim.width) / 2;
-					posTop = (docDim.height - _swFullDim.height) / 2;
-				}
+		if (Object.isString(_options.position) && _options.position.include('x')) {
+			var _pos = _options.position.split('x');
+			posLeft = parseInt(_pos[0]);
+			posTop = parseInt(_pos[1]);
+			if (isNaN(posLeft)) {
+				posLeft = 0;
 			}
+			if (isNaN(posTop)) {
+				posTop = 0;
+			}
+		} else if (typeof _options.position == 'object') {
+			posLeft = _options.position.left;
+			posTop = _options.position.top;
+			console.log(posTop);
+		} else {
+			isCustomPosition = false;
+			switch (_options.position) {
+				case 'leftTop':
+				posLeft = 0;
+				postTop = 0;
+				break;
 
+				case 'middleTop':
+				posLeft = (docDim.width - _swFullDim.width) / 2;
+				posTop = 0;
+				break;
 
-		// don't need the scrollOffsets if the position is fixed.
-		if (!_options.positionFixed) {
+				case 'rightTop':
+				posLeft = (docDim.width - _swFullDim.width);
+				posTop = 0;
+				break;
+
+				case 'leftMiddle':
+				posLeft = 0;
+				posTop = (docDim.height - _swFullDim.height) / 2;
+				break;
+
+				case 'rightMiddle':
+				posLeft = (docDim.width - _swFullDim.width);
+				posTop = (docDim.height - _swFullDim.height) / 2;
+				break;
+
+				case 'leftBottom':
+				posLeft = 0;
+				posTop = (docDim.height - _swFullDim.height);
+				break;
+
+				case 'middleBottom':
+				posLeft = (docDim.width - _swFullDim.width) / 2;
+				posTop = (docDim.height - _swFullDim.height);
+				break;
+
+				case 'rightBottom':
+				posLeft = (docDim.width - _swFullDim.width);
+				posTop = (docDim.height - _swFullDim.height);
+				break;
+
+				case 'middle':
+				default:
+				posLeft = (docDim.width - _swFullDim.width) / 2;
+				posTop = (docDim.height - _swFullDim.height) / 2;
+			}
+		}
+
+		// don't need the scrollOffsets if the position is fixed or defined manually.
+		if (!_options.positionFixed && !isCustomPosition) {
 			posLeft += docScrollOffsets.left;
 			posTop += docScrollOffsets.top;
 		}
