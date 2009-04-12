@@ -487,6 +487,41 @@
 					</script>
 					<label class="_source">Source</label>
 				</li>
+				<li>
+				  <a href="#" onclick="return _sw17()">Add contents</a>
+					<input type="checkbox" id="sw_17_callbacks" value="1" /> with callbacks?
+					<div id="sw_17" style="display:none">
+						just for test
+						<br />
+						the second line
+						<br />
+						<a href="#" onclick="return _sw17_addLine()">Add line</a>
+						<a href="#" onclick="$sw.close('sw_17');return false">Close</a>
+					</div>
+					<script type="text/javascript">
+						function _sw17() {
+							$sw.open('sw_17');
+							return false;
+						}
+            function _sw17_addLine() {
+							var callbacks = {
+								beforeChange: function(sw) {
+									sw.setStyle({display:'none'});
+								},
+								afterChange: function(sw) {
+									new Effect.Appear(sw);
+								}
+							};
+							$sw.changeContent(
+									'sw_17', 
+									"new Date: " + (new Date()) + '<br />' + $('sw_17').innerHTML,
+									$F('sw_17_callbacks') ? callbacks : {}
+							);
+							return false;
+						}
+					</script>
+					<label class="_source">Source</label>
+				</li>
 			</ul>
 			<h3>Public methods</h3>
 			<div class="content">
@@ -505,6 +540,9 @@
 					</li>
 					<li>
   					<span class="code">$sw.removeAll()</span>; remove all of divs opened by the $sw.open method.
+					</li>
+					<li>
+					<span class="code">$sw.changeContent(htmlNodeId, content, options)</span>: change content of the htmlNodeId(simplewindow). e.g. $sw.changeContent('sw', 'new content'); 2 callbacks "beforeChange" and "afterChange" can be used in the options. if wanna keep the position, options can be: {changePosition: false}. more details please check the exmpale #17.
 					</li>
 				</ul>
 			</div>
